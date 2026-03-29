@@ -65,7 +65,7 @@ const Landing = () => {
 
         {/* Floating UI Elements Mockup */}
         <div className="max-w-6xl mx-auto mt-24 relative animate-fade-in" style={{animationDelay: '0.5s'}}>
-           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-50 h-[80%] bottom-0 z-20"></div>
+           <div className="absolute bottom-0 w-full bg-gradient-to-t from-slate-50 to-transparent h-48 z-20 pointer-events-none"></div>
            <div className="bg-white p-4 md:p-8 rounded-t-3xl border border-slate-200 border-b-0 shadow-2xl relative z-10 mx-4 md:mx-0 overflow-hidden">
               <div className="flex gap-2 mb-6">
                 <div className="w-3 h-3 rounded-full bg-slate-200"></div>
@@ -73,17 +73,22 @@ const Landing = () => {
                 <div className="w-3 h-3 rounded-full bg-slate-200"></div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 opacity-60">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 pb-16">
                 {[
                   { role: 'Senior React Developer', company: 'TechNova', salary: 'Rs 250k - 400k' },
                   { role: 'Backend Engineer (Node)', company: 'Systematic', salary: 'Rs 180k - 300k' },
                   { role: 'UI/UX Lead Designer', company: 'CreativeStack', salary: 'Rs 200k - 350k' }
                 ].map((job, idx) => (
-                  <div key={idx} className="bg-slate-50 border border-slate-100 p-6 rounded-2xl">
-                    <div className="h-10 w-10 bg-indigo-100 rounded-xl mb-4"></div>
-                    <div className="font-bold text-slate-800 text-lg">{job.role}</div>
-                    <div className="text-slate-500 font-medium text-sm mt-1">{job.company}</div>
-                    <div className="mt-4 inline-block bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">{job.salary}</div>
+                  <div key={idx} className="bg-slate-50 border border-slate-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                    <div className="h-10 w-10 bg-indigo-100 rounded-xl mb-4 flex items-center justify-center text-indigo-600 font-bold "><Briefcase size={20} /></div>
+                    <div className="font-extrabold text-slate-900 text-lg">{job.role}</div>
+                    <div className="text-slate-600 font-bold text-sm mt-1">{job.company}</div>
+                    <div className="mt-4 flex items-center justify-between">
+                       <div className="inline-block bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">{job.salary}</div>
+                       <Link to="/login" className="bg-indigo-950 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-1.5 rounded-full transition-colors shadow-sm">
+                          Apply
+                       </Link>
+                    </div>
                   </div>
                 ))}
               </div>
