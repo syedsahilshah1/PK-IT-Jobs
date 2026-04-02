@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -14,14 +14,38 @@ import Login from './pages/Login';
 import AddProject from './pages/AddProject';
 import BuildPortfolio from './pages/BuildPortfolio';
 import PortfolioEditor from './pages/PortfolioEditor';
+import Interview from './pages/Interview';
+import Calendar from './pages/Calendar';
+import Applications from './pages/Applications';
+import SettingsPage from './pages/Settings';
+import CVTemplate from './pages/CVTemplate';
 
 const Layout = ({ children, userRole, onLogout }) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
-      <Navbar userRole={userRole} />
-      <div className="flex flex-1">
-        <Sidebar userRole={userRole} onLogout={onLogout} />
-        <main className="flex-1 p-8 overflow-y-auto w-full max-w-full">
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans overflow-x-hidden">
+      <Navbar 
+        userRole={userRole} 
+        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
+      />
+      <div className="flex flex-1 relative">
+        <Sidebar 
+          userRole={userRole} 
+          onLogout={onLogout} 
+          isOpen={isSidebarOpen} 
+          closeSidebar={() => setIsSidebarOpen(false)}
+        />
+        
+        {/* Mobile Overlay */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          ></div>
+        )}
+
+        <main className={`flex-1 p-4 lg:p-8 overflow-y-auto w-full transition-all duration-300`}>
           {children}
         </main>
       </div>
@@ -29,28 +53,21 @@ const Layout = ({ children, userRole, onLogout }) => {
   );
 };
 
-const PlaceholderPage = ({ title }) => (
-  <div className="w-full h-[80vh] flex flex-col items-center justify-center animate-fade-in text-center">
-    <div className="bg-indigo-50 text-indigo-600 p-4 rounded-full mb-6">
-      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-    </div>
-    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{title}</h1>
-    <p className="text-slate-500 mt-4 max-w-md font-medium leading-relaxed">This module is part of the premium PK IT Jobs suite and is currently being connected to the backend API. Check back soon!</p>
-  </div>
-);
-
 function App() {
-  const [userRole, setUserRole] = React.useState(null); 
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [userRole, setUserRole] = useState(() => localStorage.getItem('pkit_user_role'));
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('pkit_user_role'));
 
   const handleLogin = (role) => {
     setUserRole(role);
     setIsAuthenticated(true);
+    localStorage.setItem('pkit_user_role', role);
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setUserRole(null);
+    localStorage.removeItem('pkit_user_role');
+    localStorage.removeItem('pkit_user_auth');
   };
 
   return (
@@ -58,6 +75,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="/superadmin" element={<Login onLogin={handleLogin} initialRole="admin" hideToggle={true} />} />
         
         <Route path="/*" element={
           isAuthenticated ? (
@@ -76,9 +94,11 @@ function App() {
                 <Route path="admin" element={<Superadmin />} />
                 <Route path="recruiter" element={<RecruiterHub />} />
                 <Route path="create-job" element={<CreateJob />} />
-                <Route path="applications" element={<PlaceholderPage title="My Applications" />} />
-                <Route path="interview" element={<PlaceholderPage title="Interview Prep" />} />
-                <Route path="settings" element={<PlaceholderPage title="Account Settings" />} />
+                <Route path="applications" element={<Applications />} />
+                <Route path="interview" element={<Interview />} />
+                <Route path="calendar" element={<Calendar />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="cv-template" element={<CVTemplate />} />
                 <Route path="*" element={<Navigate to="/dashboard" />} />
               </Routes>
             </Layout>
@@ -92,4 +112,3 @@ function App() {
 }
 
 export default App;
-  

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Plus, 
   ChevronDown, 
@@ -6,6 +7,7 @@ import {
   Trash2, 
   Save, 
   ArrowRight,
+  ArrowLeft,
   Layout,
   Code2,
   DollarSign,
@@ -14,164 +16,346 @@ import {
   Bold,
   Italic,
   List,
-  Code
+  Code,
+  MapPin,
+  Globe,
+  Briefcase
 } from 'lucide-react';
+import { playNotificationSound } from '../utils/notifications';
 
 const CreateJob = () => {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [isPosting, setIsPosting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    category: 'Full-time',
+    location: { state: 'Punjab', city: 'Lahore' },
+    skills: ['React.js', 'TailwindCSS'],
+    minSalary: '120000',
+    maxSalary: '160000',
+    description: '',
+    experience: 'Senior',
+    stack: 'MERN Stack'
+  });
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const addSkill = (skill) => {
+    if (skill && !formData.skills.includes(skill)) {
+      setFormData(prev => ({ ...prev, skills: [...prev.skills, skill] }));
+    }
+  };
+
+  const removeSkill = (skill) => {
+    setFormData(prev => ({ ...prev, skills: prev.skills.filter(s => s !== skill) }));
+  };
+
+  const handlePostJob = () => {
+    setIsPosting(true);
+    playNotificationSound();
+    
+    // Save to localStorage (mock backend)
+    const existingJobs = JSON.parse(localStorage.getItem('pkit_posted_jobs') || '[]');
+    const newJob = {
+      ...formData,
+      id: `job-${Date.now()}`,
+      postedAt: new Date().toLocaleDateString(),
+      applications: 0,
+      status: 'Active'
+    };
+    localStorage.setItem('pkit_posted_jobs', JSON.stringify([newJob, ...existingJobs]));
+
+    setTimeout(() => {
+      setIsPosting(false);
+      navigate('/dashboard');
+    }, 1500);
+  };
+
   return (
-    <div className="create-job-page p-10 bg-gray-50/50 min-h-screen flex flex-col items-center">
-      <div className="w-full max-w-4xl text-left mb-10">
-         <h1 className="text-3xl font-800">Create Opportunity</h1>
-         <p className="text-muted mt-2">Draft your next engineering role with precision.</p>
-      </div>
+    <div className="w-full max-w-[1400px] mx-auto p-4 lg:p-10 bg-slate-50 min-h-screen animate-fade-in">
+      <div className="w-full max-w-5xl mx-auto flex flex-col items-center">
+        
+        <header className="w-full flex justify-between items-end mb-10">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 pb-1.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold tracking-widest uppercase mb-3 shadow-sm border border-indigo-200">
+              Recruiter Hub / Create
+            </div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Create Opportunity</h1>
+            <p className="text-slate-500 mt-2 font-medium">Draft your next engineering role with precision.</p>
+          </div>
+          <div className="hidden lg:flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-white px-4 py-2 rounded-full border border-slate-200">
+            <span className={step >= 1 ? 'text-indigo-600' : ''}>Details</span>
+             <ChevronDown size={12} className="-rotate-90" />
+            <span className={step >= 2 ? 'text-indigo-600' : ''}>Stack</span>
+             <ChevronDown size={12} className="-rotate-90" />
+            <span className={step >= 3 ? 'text-indigo-600' : ''}>Compensation</span>
+             <ChevronDown size={12} className="-rotate-90" />
+            <span className={step >= 4 ? 'text-indigo-600' : ''}>Review</span>
+          </div>
+        </header>
 
-      <div className="form-container card w-full max-w-4xl p-12 border-none shadow-xl">
-        {/* Step Progress */}
-        <div className="step-header flex justify-between items-center bg-primary/5 p-6 rounded-2xl mb-12">
-           <div className="flex gap-4 items-center">
-              <span className="text-[10px] font-800 tracking-widest text-primary uppercase">STEP 01 / 04</span>
-           </div>
-           <div className="step-dots flex gap-2">
-              <div className="h-1 w-12 rounded bg-primary"></div>
-              <div className="h-1 w-12 rounded bg-gray-200"></div>
-              <div className="h-1 w-12 rounded bg-gray-200"></div>
-              <div className="h-1 w-12 rounded bg-gray-200"></div>
-           </div>
-        </div>
+        <div className="bg-white w-full rounded-[40px] shadow-xl border border-slate-200/60 overflow-hidden">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr]">
+            
+            {/* Sidebar Navigation */}
+            <aside className="bg-slate-50/50 border-r border-slate-100 p-8 flex flex-col gap-6">
+               {[
+                 { id: 1, label: 'Role Details', icon: FileText },
+                 { id: 2, label: 'Stack & Skills', icon: Code2 },
+                 { id: 3, label: 'Compensation', icon: DollarSign },
+                 { id: 4, label: 'Review & Post', icon: CheckCircle2 }
+               ].map((s) => (
+                 <button 
+                  key={s.id}
+                  onClick={() => setStep(s.id)}
+                  className={`flex items-center gap-4 transition-all text-left ${step === s.id ? 'translate-x-2' : 'opacity-50 grayscale hover:opacity-100 hover:grayscale-0'}`}
+                 >
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm border transition-all ${step === s.id ? 'bg-indigo-600 border-indigo-700 text-white shadow-indigo-200' : 'bg-white border-slate-200 text-slate-400'}`}>
+                       <s.icon size={20} />
+                    </div>
+                    <div className="flex flex-col">
+                       <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Step 0{s.id}</span>
+                       <span className="text-sm font-bold text-slate-900">{s.label}</span>
+                    </div>
+                 </button>
+               ))}
 
-        <div className="grid grid-cols-12 gap-10">
-           {/* Left Sidebar Steps */}
-           <aside className="col-span-3 flex flex-col gap-8">
-              <div className="nav-step active">
-                 <div className="icon-wrap-sm"><FileText size={18} /></div>
-                 <span>Role Details</span>
-              </div>
-              <div className="nav-step">
-                 <div className="icon-wrap-sm"><Code2 size={18} /></div>
-                 <span>Stack & Skills</span>
-              </div>
-              <div className="nav-step">
-                 <div className="icon-wrap-sm"><DollarSign size={18} /></div>
-                 <span>Compensation</span>
-              </div>
-              <div className="nav-step">
-                 <div className="icon-wrap-sm"><CheckCircle2 size={18} /></div>
-                 <span>Review & Post</span>
-              </div>
+               <div className="mt-12 p-6 bg-indigo-900 rounded-[24px] text-indigo-100 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
+                  <p className="text-[9px] font-black tracking-widest uppercase mb-4 opacity-70">PRO TIP</p>
+                  <p className="text-xs font-semibold leading-relaxed relative z-10 italic">"Developer-centric descriptions with clear tech stacks receive 40% more qualified applications."</p>
+               </div>
+            </aside>
 
-              <div className="pro-tip bg-blue-50/50 p-6 rounded-2xl border border-blue-50 mt-10">
-                 <p className="text-[10px] font-800 text-primary tracking-widest uppercase mb-4">PRO TIP</p>
-                 <p className="text-xs italic text-muted-600 leading-relaxed">"Developer-centric descriptions with clear tech stacks receive 40% more qualified applications."</p>
-              </div>
-           </aside>
+            {/* Content Area */}
+            <div className="p-8 lg:p-12">
+               
+               {step === 1 && (
+                 <div className="space-y-8 animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="flex flex-col gap-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Job Title</label>
+                          <input 
+                            placeholder="e.g. Senior Backend Engineer" 
+                            className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-semibold outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 transition-all"
+                            value={formData.title}
+                            onChange={(e) => handleInputChange('title', e.target.value)}
+                          />
+                       </div>
+                       <div className="flex flex-col gap-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Category</label>
+                          <select 
+                            className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-semibold outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 transition-all appearance-none"
+                            value={formData.category}
+                            onChange={(e) => handleInputChange('category', e.target.value)}
+                          >
+                             <option>Full-time</option>
+                             <option>Part-time</option>
+                             <option>Internship</option>
+                             <option>Contract</option>
+                          </select>
+                       </div>
+                    </div>
 
-           {/* Main Form Fields */}
-           <div className="col-span-9 flex flex-col gap-10">
-              <div className="grid grid-cols-2 gap-8">
-                 <div className="input-group">
-                    <label>JOB TITLE</label>
-                    <input type="text" placeholder="e.g. Senior Frontend Engineer" defaultValue="Senior Frontend Engineer" className="form-input" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="flex flex-col gap-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Experience Level</label>
+                          <select 
+                            className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-semibold outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 transition-all appearance-none"
+                            value={formData.experience}
+                            onChange={(e) => handleInputChange('experience', e.target.value)}
+                          >
+                             <option>Junior (0-2 years)</option>
+                             <option>Mid (3-5 years)</option>
+                             <option>Senior (6+ years)</option>
+                             <option>Lead / Architect</option>
+                          </select>
+                       </div>
+                       <div className="flex flex-col gap-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Location (City)</label>
+                          <input 
+                            placeholder="e.g. Lahore, Pakistan" 
+                            className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-semibold outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 transition-all"
+                            value={formData.location.city}
+                            onChange={(e) => handleInputChange('location', { ...formData.location, city: e.target.value })}
+                          />
+                       </div>
+                    </div>
                  </div>
-                 <div className="input-group">
-                    <label>CATEGORY</label>
-                    <div className="relative">
-                       <select className="form-select w-full">
-                          <option>Full-time</option>
-                          <option>Part-time</option>
-                          <option>Internship</option>
-                          <option>Contract</option>
+               )}
+
+               {step === 2 && (
+                 <div className="space-y-8 animate-fade-in">
+                    <div className="flex flex-col gap-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tech Stack Focus</label>
+                       <select 
+                         className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-semibold outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 transition-all appearance-none"
+                         value={formData.stack}
+                         onChange={(e) => handleInputChange('stack', e.target.value)}
+                       >
+                          <option>MERN Stack</option>
+                          <option>MEAN Stack</option>
+                          <option>PHP / Laravel</option>
+                          <option>Python / Django</option>
+                          <option>Java / Spring</option>
+                          <option>.NET / C#</option>
                        </select>
-                       <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted" />
                     </div>
-                 </div>
-              </div>
 
-              <div className="input-group">
-                 <label>REQUIRED SKILLS</label>
-                 <div className="skills-input-field flex flex-wrap gap-2 p-4 bg-gray-50 border border-gray-100 rounded-xl">
-                    {['React.js', 'TailwindCSS', 'TypeScript'].map(s => (
-                      <span key={s} className="skill-pill-edit">{s} <Trash2 size={12} className="cursor-pointer opacity-50 hover:opacity-100" /></span>
-                    ))}
-                    <input type="text" placeholder="Add skills..." className="bg-transparent border-none outline-none text-sm ml-2 flex-1" />
-                 </div>
-                 <div className="flex gap-2 mt-4 items-center">
-                    <span className="text-[9px] font-800 text-muted-400 uppercase tracking-widest">POPULAR TAGS:</span>
-                    {['Python', 'Docker', 'AWS'].map(t => (
-                      <span key={t} className="text-[10px] text-primary/60 hover:text-primary cursor-pointer font-600 transition-all">{t}</span>
-                    ))}
-                 </div>
-              </div>
-
-              <div className="compensation-section">
-                 <label className="block mb-6 uppercase text-[10px] font-800 text-muted tracking-widest">COMPENSATION (ANNUAL USD)</label>
-                 <div className="grid grid-cols-3 gap-6 items-start">
-                    <div className="input-group">
-                       <span className="text-xs font-600 text-muted mb-2 block">MIN SALARY</span>
-                       <div className="price-input-wrap relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-300 font-700">$</span>
-                          <input type="number" defaultValue="120000" className="form-input pl-8" />
+                    <div className="flex flex-col gap-4">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Required Skills</label>
+                       <div className="flex flex-wrap gap-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl min-h-[60px]">
+                          {formData.skills.map(s => (
+                            <span key={s} className="bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-600 flex items-center gap-2 shadow-sm">
+                               {s}
+                               <Trash2 size={12} className="cursor-pointer text-slate-400 hover:text-rose-500" onClick={() => removeSkill(s)} />
+                            </span>
+                          ))}
+                          <input 
+                            type="text" 
+                            placeholder="Type skill & press enter..." 
+                            className="bg-transparent border-none outline-none text-sm font-medium ml-2 flex-1 min-w-[150px]"
+                            onKeyDown={(e) => {
+                               if (e.key === 'Enter') {
+                                  addSkill(e.target.value);
+                                  e.target.value = '';
+                               }
+                            }}
+                          />
+                       </div>
+                       <div className="flex gap-2 items-center">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SUGGESTED:</span>
+                          {['TypeScript', 'Docker', 'AWS', 'Next.js'].map(t => (
+                            <button key={t} onClick={() => addSkill(t)} className="text-[10px] text-indigo-600/60 hover:text-indigo-600 font-bold transition-all underline decoration-dotted underline-offset-4">{t}</button>
+                          ))}
                        </div>
                     </div>
-                    <div className="input-group">
-                       <span className="text-xs font-600 text-muted mb-2 block">MAX SALARY</span>
-                       <div className="price-input-wrap relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-300 font-700">$</span>
-                          <input type="number" defaultValue="160000" className="form-input pl-8" />
+                 </div>
+               )}
+
+               {step === 3 && (
+                 <div className="space-y-8 animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="flex flex-col gap-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Min Annual Salary (PRK/month)</label>
+                          <div className="relative">
+                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rs.</span>
+                             <input 
+                                type="number" 
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-sm font-semibold outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 transition-all"
+                                value={formData.minSalary}
+                                onChange={(e) => handleInputChange('minSalary', e.target.value)}
+                             />
+                          </div>
+                       </div>
+                       <div className="flex flex-col gap-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Max Annual Salary (PRK/month)</label>
+                          <div className="relative">
+                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rs.</span>
+                             <input 
+                                type="number" 
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-sm font-semibold outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 transition-all"
+                                value={formData.maxSalary}
+                                onChange={(e) => handleInputChange('maxSalary', e.target.value)}
+                             />
+                          </div>
                        </div>
                     </div>
-                    <div className="market-alert bg-tertiary-light p-5 rounded-2xl border border-tertiary/10 flex items-start gap-3">
-                       <div className="p-1 bg-tertiary/10 rounded text-tertiary mt-0.5"><Info size={14} /></div>
+
+                    <div className="bg-indigo-50/50 border border-indigo-100 p-6 rounded-[24px] flex items-start gap-4">
+                       <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200"><Info size={16} /></div>
                        <div>
-                          <p className="text-[10px] font-800 text-tertiary tracking-widest uppercase">MARKET RATE</p>
-                          <p className="text-[10px] text-tertiary/70 mt-1 leading-normal">Above average for Senior level in SF/NY.</p>
+                          <h4 className="text-sm font-bold text-indigo-900 mb-1">Market Insight</h4>
+                          <p className="text-xs text-indigo-700/70 font-medium leading-relaxed">This range is competitive for {formData.experience} roles in {formData.location.city}. Roles with clear salary ranges get 60% more applications.</p>
                        </div>
                     </div>
                  </div>
-              </div>
+               )}
 
-              <div className="input-group">
-                 <label>JOB DESCRIPTION</label>
-                 <div className="rich-editor-placeholder border border-gray-100 rounded-xl overflow-hidden mt-4">
-                    <div className="editor-toolbar flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                       <div className="flex gap-4">
-                          <Bold size={16} className="text-muted cursor-pointer hover:text-primary" />
-                          <Italic size={16} className="text-muted cursor-pointer hover:text-primary" />
-                          <List size={16} className="text-muted cursor-pointer hover:text-primary" />
-                          <Code size={16} className="text-muted cursor-pointer hover:text-primary" />
+               {step === 4 && (
+                 <div className="space-y-8 animate-fade-in">
+                    <div className="bg-slate-50 border border-slate-200 rounded-[32px] p-8">
+                       <div className="flex items-center gap-4 mb-6">
+                          <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-100">
+                             <Briefcase size={28} />
+                          </div>
+                          <div>
+                             <h3 className="text-2xl font-black text-slate-900">{formData.title || 'Untitled Role'}</h3>
+                             <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">{formData.category} • {formData.experience} • {formData.location.city}</p>
+                          </div>
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-8 mt-8 py-8 border-t border-slate-200/60">
+                          <div>
+                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Stack Focus</label>
+                             <p className="text-sm font-bold text-slate-700 bg-white px-4 py-2 rounded-xl border border-slate-200 w-max">{formData.stack}</p>
+                          </div>
+                          <div>
+                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Salary Range</label>
+                             <p className="text-sm font-bold text-emerald-600">Rs. {formData.minSalary} - {formData.maxSalary}</p>
+                          </div>
+                       </div>
+
+                       <div className="pt-8 border-t border-slate-200/60">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-4">Required Skills</label>
+                          <div className="flex flex-wrap gap-2">
+                             {formData.skills.map(s => <span key={s} className="px-3 py-1.5 bg-white border border-slate-100 rounded-lg text-xs font-bold text-slate-600 shadow-sm">{s}</span>)}
+                          </div>
                        </div>
                     </div>
-                    <textarea 
-                      placeholder="Outline the mission, technical challenges, and growth opportunities..." 
-                      className="w-full h-80 p-8 text-sm outline-none resize-none bg-white placeholder:italic placeholder:text-muted-200"
-                    ></textarea>
+
+                    <div className="flex flex-col gap-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Final Instructions / Description</label>
+                       <textarea 
+                        rows="4"
+                        placeholder="Any additional details or mission statement for the candidates..." 
+                        className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-sm font-medium outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 transition-all resize-none"
+                        value={formData.description}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                       />
+                    </div>
                  </div>
-              </div>
-           </div>
+               )}
+
+               {/* Footer Buttons */}
+               <div className="flex justify-between items-center mt-12 pt-10 border-t border-slate-100">
+                  <button 
+                   onClick={() => step > 1 ? setStep(step - 1) : navigate('/dashboard')}
+                   className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-all no-underline"
+                  >
+                    <ArrowLeft size={16} /> {step === 1 ? 'Cancel Draft' : 'Back Stage'}
+                  </button>
+                  <div className="flex gap-4">
+                     {step < 4 ? (
+                       <button 
+                        onClick={() => setStep(step + 1)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-10 py-4 rounded-2xl flex items-center gap-3 transition-all shadow-lg shadow-indigo-100 border border-indigo-700"
+                       >
+                         Next Stage <ArrowRight size={18} />
+                       </button>
+                     ) : (
+                       <button 
+                        onClick={handlePostJob}
+                        disabled={isPosting}
+                        className={`bg-indigo-900 hover:bg-slate-900 text-white font-bold px-12 py-4 rounded-2xl flex items-center gap-3 transition-all shadow-xl border border-slate-900 ${isPosting ? 'opacity-50 pointer-events-none' : ''}`}
+                       >
+                         {isPosting ? 'Posting Opportunity...' : 'Post Opportunity'} <CheckCircle2 size={18} />
+                       </button>
+                     ) }
+                  </div>
+               </div>
+
+            </div>
+
+          </div>
+
         </div>
 
-        <div className="footer-actions flex justify-between items-center mt-16 pt-10 border-t border-gray-100">
-           <button className="flex items-center gap-2 text-xs font-800 text-muted uppercase tracking-widest hover:text-danger hover:scale-105 transition-all"><Trash2 size={16} /> Discard Draft</button>
-           <div className="flex gap-4">
-              <button className="btn-outline px-10 py-4 bg-primary/5 border-none text-primary hover:bg-primary/10">Save Draft</button>
-              <button className="btn-primary px-12 py-4 rounded-xl flex items-center gap-3">Next Stage <ArrowRight size={18} /></button>
-           </div>
-        </div>
       </div>
-
-      <style>{`
-        .nav-step { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; opacity: 0.6; transition: all 0.3s; }
-        .nav-step:hover { opacity: 1; color: var(--primary); }
-        .nav-step.active { opacity: 1; color: var(--primary); }
-        .icon-wrap-sm { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #f1f5f9; }
-        .nav-step.active .icon-wrap-sm { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
-        
-        .input-group label { display: block; font-size: 10px; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 12px; }
-        .form-input, .form-select { width: 100%; padding: 16px 20px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; font-size: 14px; outline: none; transition: all 0.2s; }
-        .form-input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px var(--primary-light); }
-        .form-select { appearance: none; }
-        
-        .skill-pill-edit { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--primary); }
-      `}</style>
     </div>
   );
 };

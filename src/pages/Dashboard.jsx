@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Search, 
   CheckCircle2, 
@@ -10,6 +11,7 @@ import {
   ExternalLink,
   Edit2
 } from 'lucide-react';
+import { quickApply } from '../utils/jobUtils';
 
 const Dashboard = () => {
   return (
@@ -32,20 +34,20 @@ const Dashboard = () => {
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex-1 lg:min-w-[300px]">
               <h3 className="text-sm font-bold text-slate-900 mb-6 uppercase tracking-wide">Quick Actions</h3>
               <div className="flex flex-col gap-3">
-                <button className="flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl transition-colors group">
+                <Link to="/portfolio-editor" className="flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl transition-colors group no-underline text-inherit">
                   <div className="flex items-center gap-4">
                     <span className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100"><Edit2 size={18} /></span>
                     <span className="font-semibold text-slate-700">Edit Portfolio</span>
                   </div>
                   <ChevronRight size={18} className="text-slate-400 group-hover:text-slate-600" />
-                </button>
-                <button className="flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl transition-colors group">
+                </Link>
+                <Link to="/jobs" className="flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl transition-colors group no-underline text-inherit">
                   <div className="flex items-center gap-4">
                     <span className="p-2 bg-red-50 text-red-600 rounded-lg group-hover:bg-red-100"><Search size={18} /></span>
                     <span className="font-semibold text-slate-700">Browse All Jobs</span>
                   </div>
                   <ChevronRight size={18} className="text-slate-400 group-hover:text-slate-600" />
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -119,7 +121,7 @@ const Dashboard = () => {
                   <div className="flex flex-wrap gap-2 mt-4 mb-6">
                     {job.tags.map(t => <span key={t} className="px-2 py-1 bg-slate-100 text-slate-500 text-[9px] font-bold rounded uppercase tracking-wider">{t}</span>)}
                   </div>
-                  <button className="w-full py-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-sm transition-colors border border-blue-100 hover:border-blue-600">Quick Apply</button>
+                  <button onClick={() => quickApply(job)} className="w-full py-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-sm transition-colors border border-blue-100 hover:border-blue-600">Quick Apply</button>
                 </div>
               ))}
             </div>

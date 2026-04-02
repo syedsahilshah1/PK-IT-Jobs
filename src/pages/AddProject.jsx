@@ -17,6 +17,9 @@ const AddProject = () => {
   const handleSubmit = (e) => {
      e.preventDefault();
      // Mock submit
+     import('../utils/notifications').then(({ playNotificationSound }) => {
+       playNotificationSound();
+     });
      setSuccess(true);
      setTimeout(() => setSuccess(false), 3000);
   };

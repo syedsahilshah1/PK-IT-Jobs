@@ -12,6 +12,16 @@ import { Link } from 'react-router-dom';
 
 const templates = [
   {
+    id: 0,
+    name: 'Professional ATS (Verified)',
+    description: 'The industry standard for tech resumes. No images, minimal formatting, optimized for screening systems.',
+    tags: ['ATS Verified', 'Minimalist', 'MS Word Compatible'],
+    image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&q=80&w=800',
+    color: 'bg-slate-900',
+    rating: '5.0',
+    path: '/cv-template'
+  },
+  {
     id: 1,
     name: 'Minimal Developer',
     description: 'Clean, fast, and content-focused. Perfect for backend engineers and data scientists.',
@@ -78,9 +88,12 @@ const BuildPortfolio = () => {
                </div>
                <h3 className="text-xl font-bold mb-1">{templates.find(t => t.id === selectedTemplate)?.name}</h3>
                <p className="text-sm font-medium text-indigo-100 mb-6">Template activated. Proceed to the CV tool.</p>
-               <Link to="/portfolio-editor" className="w-full bg-white text-indigo-600 font-bold py-3 rounded-xl hover:bg-slate-50 shadow-sm transition-all flex items-center justify-center gap-2 no-underline">
-                 Start Editing CV <ChevronRight size={18} />
-               </Link>
+                <Link 
+                  to={templates.find(t => t.id === selectedTemplate)?.path || "/portfolio-editor"} 
+                  className="w-full bg-white text-indigo-600 font-bold py-3 rounded-xl hover:bg-slate-50 shadow-sm transition-all flex items-center justify-center gap-2 no-underline"
+                >
+                  Start Editing CV <ChevronRight size={18} />
+                </Link>
             </div>
          )}
       </div>

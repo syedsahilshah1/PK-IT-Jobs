@@ -12,8 +12,55 @@ import {
   Monitor,
   Zap
 } from 'lucide-react';
+import { quickApply } from '../utils/jobUtils';
 
 const Jobs = () => {
+  const [jobList, setJobList] = React.useState([
+    {
+       logo: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
+       title: 'Frontend Developer Intern',
+       company: 'PixelFlow Studios',
+       location: 'Vancouver (Remote)',
+       tags: ['React', 'Tailwind', 'TypeScript'],
+       salary: '$3k - $5k',
+       isFeatured: true
+    },
+    {
+       logo: 'https://cdn-icons-png.flaticon.com/128/888/888879.png',
+       title: 'Backend Engineering Fellow',
+       company: 'OpenSource Foundation',
+       location: 'Distributed',
+       tags: ['Go', 'Docker', 'K8s'],
+       salary: 'Stipend Available',
+       isFeatured: false
+    },
+    {
+       logo: 'https://cdn-icons-png.flaticon.com/128/919/919851.png',
+       title: 'Mobile Dev (React Native)',
+       company: 'SwiftApp Inc',
+       location: 'San Francisco, CA',
+       tags: ['React Native', 'Firebase'],
+       salary: '$110k - $140k',
+       isFeatured: false
+    }
+  ]);
+
+  React.useEffect(() => {
+    document.title = "Opportunities | PK IT Jobs";
+    const stored = JSON.parse(localStorage.getItem('pkit_posted_jobs') || '[]');
+    if (stored.length > 0) {
+      const formatted = stored.map(j => ({
+        ...j,
+        logo: 'https://cdn-icons-png.flaticon.com/128/10435/10435133.png',
+        location: j.location.city,
+        tags: j.skills,
+        salary: `Rs. ${j.minSalary} - ${j.maxSalary}`,
+        company: 'Your Company'
+      }));
+      setJobList(prev => [...formatted, ...prev]);
+    }
+  }, []);
+  
   return (
     <div className="w-full max-w-[1400px] mx-auto animate-fade-in relative z-10 p-2 lg:p-6">
       {/* Top Search Header */}
@@ -47,25 +94,50 @@ const Jobs = () => {
             </div>
             
             <div className="mb-8">
+              <label className="text-sm font-bold text-slate-900 block mb-4">Location</label>
+              <div className="space-y-2">
+                <select className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-100 outline-none">
+                  <option>Select State</option>
+                  <option>California</option>
+                  <option>Texas</option>
+                  <option>New York</option>
+                  <option>Washington</option>
+                  <option>Punjab</option>
+                  <option>Sindh</option>
+                </select>
+                <select className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-100 outline-none">
+                  <option>Select City</option>
+                  <option>San Francisco</option>
+                  <option>Austin</option>
+                  <option>Seattle</option>
+                  <option>Lahore</option>
+                  <option>Islamabad</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mb-8">
               <label className="text-sm font-bold text-slate-900 block mb-4">Work Mode</label>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 text-sm font-bold text-slate-900 cursor-pointer">
+                <div className="flex items-center gap-3 text-sm font-bold text-slate-900 cursor-pointer group">
                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]"></span> Remote
                 </div>
-                <div className="flex items-center gap-3 text-sm font-medium text-slate-500 cursor-pointer hover:text-slate-700">
-                   <span className="w-2.5 h-2.5 rounded-full bg-slate-200"></span> Onsite
+                <div className="flex items-center gap-3 text-sm font-medium text-slate-500 cursor-pointer hover:text-slate-700 transition-colors">
+                   <span className="w-2.5 h-2.5 rounded-full bg-slate-200 group-hover:bg-slate-300"></span> Onsite
                 </div>
-                <div className="flex items-center gap-3 text-sm font-medium text-slate-500 cursor-pointer hover:text-slate-700">
-                   <span className="w-2.5 h-2.5 rounded-full bg-slate-200"></span> Hybrid
+                <div className="flex items-center gap-3 text-sm font-medium text-slate-500 cursor-pointer hover:text-slate-700 transition-colors">
+                   <span className="w-2.5 h-2.5 rounded-full bg-slate-200 group-hover:bg-slate-300"></span> Hybrid
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-bold text-slate-900 block mb-4">Skill Stack</label>
+              <label className="text-sm font-bold text-slate-900 block mb-4">Tech Stack</label>
               <div className="flex flex-wrap gap-2">
-                 {['REACT', 'NODE.JS', 'PYTHON', 'AWS'].map(skill => (
-                   <span key={skill} className="px-3 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-md">{skill}</span>
+                 {['MERN', 'MEAN', 'PHP', 'REACT', 'NODE.JS', 'PYTHON', 'LARAVEL', 'AWS'].map(skill => (
+                   <button key={skill} className="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-500 text-[10px] font-bold rounded-md border border-slate-200 transition-all cursor-pointer">
+                    {skill}
+                   </button>
                  ))}
               </div>
             </div>
@@ -86,35 +158,7 @@ const Jobs = () => {
 
           <div className="flex flex-col xl:flex-row gap-8 items-start">
             <div className="flex-1 flex flex-col gap-6 w-full">
-              {[
-                {
-                   logo: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-                   title: 'Frontend Developer Intern',
-                   company: 'PixelFlow Studios',
-                   location: 'Vancouver (Remote)',
-                   tags: ['React', 'Tailwind', 'TypeScript'],
-                   salary: '$3k - $5k',
-                   isFeatured: true
-                },
-                {
-                   logo: 'https://cdn-icons-png.flaticon.com/128/888/888879.png',
-                   title: 'Backend Engineering Fellow',
-                   company: 'OpenSource Foundation',
-                   location: 'Distributed',
-                   tags: ['Go', 'Docker', 'K8s'],
-                   salary: 'Stipend Available',
-                   isFeatured: false
-                },
-                {
-                   logo: 'https://cdn-icons-png.flaticon.com/128/919/919851.png',
-                   title: 'Mobile Dev (React Native)',
-                   company: 'SwiftApp Inc',
-                   location: 'San Francisco, CA',
-                   tags: ['React Native', 'Firebase'],
-                   salary: '$110k - $140k',
-                   isFeatured: false
-                }
-              ].map((job, i) => (
+              {jobList.map((job, i) => (
                 <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                     <div className="flex gap-4">
@@ -132,10 +176,10 @@ const Jobs = () => {
                           </div>
                        </div>
                     </div>
-                    <div className="flex flex-row sm:flex-col sm:items-end justify-between sm:h-full gap-4 mt-2 sm:mt-0 items-center">
+                     <div className="flex flex-row sm:flex-col sm:items-end justify-between sm:h-full gap-4 mt-2 sm:mt-0 items-center">
                        <span className="font-bold text-slate-900 text-sm whitespace-nowrap">{job.salary} <span className="text-slate-400 font-medium">/ mo</span></span>
-                       <button className="px-8 py-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg font-bold text-sm transition-colors border border-indigo-100 hover:border-indigo-600">Apply</button>
-                    </div>
+                       <button onClick={() => quickApply(job)} className="px-8 py-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg font-bold text-sm transition-colors border border-indigo-100 hover:border-indigo-600">Apply</button>
+                     </div>
                   </div>
                 </div>
               ))}

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Bell, 
   MessageSquare, 
@@ -14,201 +15,237 @@ import {
   XCircle,
   HelpCircle,
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  DollarSign,
+  Lock,
+  Unlock,
+  ShieldAlert,
+  Send,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
+import { playNotificationSound } from '../utils/notifications';
 
 const Superadmin = () => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const activeTab = queryParams.get('tab') || 'overview';
+
+  const [logs, setLogs] = useState([]);
+  const [lockedUsers, setLockedUsers] = useState([]);
+  const [smtpLogs, setSmtpLogs] = useState([
+    { to: 'admin@pkit.jobs', subject: 'Security Alert: Account #821 Locked', status: 'SENT', time: '12m ago' },
+    { to: 'student@example.com', subject: 'Your Job Application Received', status: 'SENT', time: '1h ago' }
+  ]);
+
+  useEffect(() => {
+    document.title = "Platform Administration | PK IT Jobs";
+    loadData();
+  }, [activeTab]);
+
+  const loadData = () => {
+    const storedLogs = JSON.parse(localStorage.getItem('pkit_system_logs') || '[]');
+    setLogs(storedLogs);
+
+    const locked = [];
+    for (let i = 0; i < localStorage.length; i++) {
+       const key = localStorage.key(i);
+       if (key && key.startsWith('lockout_')) {
+          const data = JSON.parse(localStorage.getItem(key));
+          if (data.until && data.until > new Date().getTime()) {
+             locked.push({ 
+                email: key.replace('lockout_', ''), 
+                until: new Date(data.until).toLocaleTimeString(),
+                attempts: '3'
+             });
+          }
+       }
+    }
+    setLockedUsers(locked);
+  };
+
+  const handleUnlock = (email) => {
+    localStorage.removeItem(`lockout_${email}`);
+    localStorage.removeItem(`attempts_${email}`);
+    const newLog = { id: Date.now(), type: 'SECURITY', event: 'MANUAL_UNLOCK', user: email, time: new Date().toISOString(), status: 'UNLOCKED' };
+    const updatedLogs = [newLog, ...logs];
+    localStorage.setItem('pkit_system_logs', JSON.stringify(updatedLogs.slice(0, 50)));
+    setLogs(updatedLogs);
+    loadData();
+    playNotificationSound();
+  };
+
   return (
-    <div className="superadmin-page animate-fade-in p-10 bg-gray-50/50 min-h-screen">
-      <header className="flex justify-between items-center mb-10">
-        <div className="search-wrap glass px-4 py-2 rounded-xl flex items-center gap-3 w-96">
-           <Search size={18} className="text-muted" />
-           <input type="text" placeholder="Search systems, logs, or users..." className="bg-transparent border-none outline-none text-sm w-full" />
+    <div className="w-full max-w-[1400px] mx-auto animate-fade-in p-2 lg:p-6 min-h-screen">
+      
+      {/* Superadmin Header */}
+      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12">
+        <div className="flex-1 text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 pb-1.5 rounded-full bg-slate-900 text-white text-[10px] font-bold tracking-widest uppercase mb-4 shadow-xl border border-slate-700">
+             <ShieldCheck size={12} className="text-emerald-400" /> Root Access Active
+          </div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">
+            {activeTab === 'overview' && 'Systems Overview'}
+            {activeTab === 'users' && 'User Management'}
+            {activeTab === 'moderation' && 'Job Moderation'}
+            {activeTab === 'logs' && 'System Console'}
+          </h1>
+          <p className="text-slate-500 font-medium text-lg max-w-xl">
+             Managing total system lifecycle across {activeTab} stream.
+          </p>
         </div>
-        <div className="header-actions flex gap-6 items-center">
-           <div className="icon-badge relative"><Bell size={20} /><span className="dot red"></span></div>
-           <MessageSquare size={20} />
-           <img src="https://ui-avatars.com/api/?name=Admin&background=0F172A&color=fff" className="w-10 h-10 rounded-full" alt="" />
+        
+        <div className="flex items-center gap-3">
+           <button onClick={() => { playNotificationSound(); loadData(); }} className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-500 hover:text-indigo-600 shadow-sm"><Activity size={20} /></button>
+           <div className="flex items-center gap-4 bg-white border border-slate-200 px-5 py-2.5 rounded-3xl shadow-sm">
+              <div className="text-right">
+                 <p className="text-xs font-black text-slate-900">Admin_Root</p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase">System Architect</p>
+              </div>
+              <img src="https://ui-avatars.com/api/?name=Root+Admin&background=0F172A&color=fff" className="w-10 h-10 rounded-full border border-slate-100" alt="" />
+           </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-12 gap-8 mb-10">
-        <div className="col-span-6 card revenue-card bg-primary text-white p-10 flex flex-col justify-between overflow-hidden relative">
-           <div className="flex justify-between items-center mb-10 z-10">
-              <span className="text-xs font-800 tracking-widest opacity-70">PLATFORM REVENUE (Q3)</span>
-              <span className="badge-live px-3 py-1 bg-white/20 rounded font-800 text-[10px]">LIVE</span>
-           </div>
+      {/* Dynamic Tab Content */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        
+        {/* Main Area */}
+        <div className="xl:col-span-8 space-y-8">
            
-           <div className="z-10">
-              <p className="text-5xl font-800">$1,284,500.00</p>
-              <p className="text-sm mt-4 flex items-center gap-2 font-600 opacity-80">
-                 <TrendingUp size={16} /> +12.4% <span className="font-400 opacity-60">from last quarter</span>
-              </p>
-           </div>
-
-           <div className="revenue-bars flex items-end gap-2 h-40 mt-10 z-10">
-              {[30, 45, 35, 60, 50, 80, 55, 100].map((h, i) => (
-                <div key={i} className="bar flex-1 bg-white/20 rounded-t" style={{height: `${h}%`}}></div>
-              ))}
-           </div>
-        </div>
-
-        <div className="col-span-3 card flex flex-col justify-between p-8">
-           <div>
-              <span className="text-xs font-800 text-muted tracking-widest uppercase">User Ecosystem</span>
-              <p className="text-4xl font-800 mt-2">42.8k</p>
-           </div>
-           
-           <div className="ecosystem-stats mt-10">
-              <div className="flex justify-between items-center mb-2">
-                 <span className="text-xs font-600">Students</span>
-                 <span className="text-xs font-800 text-primary">38.2k</span>
-              </div>
-              <div className="h-1 bg-gray-100 rounded overflow-hidden"><div className="h-full bg-primary w-[85%]"></div></div>
-              
-              <div className="flex justify-between items-center mt-6 mb-2">
-                 <span className="text-xs font-600">Companies</span>
-                 <span className="text-xs font-800 text-tertiary">4.6k</span>
-              </div>
-              <div className="h-1 bg-gray-100 rounded overflow-hidden"><div className="h-full bg-tertiary w-[15%]"></div></div>
-           </div>
-        </div>
-
-        <div className="col-span-3 card flex flex-col justify-between p-8">
-           <div>
-              <span className="text-xs font-800 text-muted tracking-widest uppercase">Active Pipelines</span>
-              <p className="text-4xl font-800 mt-2">1,402</p>
-           </div>
-           
-           <div className="mod-alert bg-red-50 p-6 rounded-xl flex items-center gap-4 border border-red-100 mt-10">
-              <div className="icon-wrap-red bg-red-100 p-2 rounded text-red-600"><Briefcase size={20} /></div>
-              <div>
-                 <p className="text-[10px] font-800 text-red-600 tracking-wide">JOB MODERATION</p>
-                 <p className="text-xs font-700 text-red-900 mt-1">42 Pending Approval</p>
-              </div>
-           </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-12 gap-8">
-        <div className="col-span-8 card">
-           <div className="flex justify-between items-center mb-10">
-              <div className="text-left">
-                 <h3>User Management</h3>
-                 <p className="text-xs text-muted mt-1 font-600 uppercase tracking-widest">RECENTLY ACTIVE ACCOUNTS</p>
-              </div>
-              <button className="btn-primary py-2 px-6 rounded-lg text-sm">Manage All Users</button>
-           </div>
-           
-           <table className="user-table w-full text-left">
-              <thead>
-                 <tr className="text-xs font-800 text-muted tracking-widest uppercase border-b border-gray-100">
-                    <th className="pb-4">USER ENTITY</th>
-                    <th className="pb-4">TYPE</th>
-                    <th className="pb-4">STATUS</th>
-                    <th className="pb-4 text-right">ACTION</th>
-                 </tr>
-              </thead>
-              <tbody>
-                 {[
-                   { name: 'Sarah Chen', email: 'sarah.c@student.edu', type: 'STUDENT', status: 'Active', color: '#10b981' },
-                   { name: 'NeuroLogic AI', email: 'hiring@neurologic.io', type: 'COMPANY', status: 'Verified', color: '#3b82f6' },
-                   { name: 'James Dalton', email: 'j.dalton@gmail.com', type: 'STUDENT', status: 'Flagged', color: '#ef4444' }
-                 ].map((u, i) => (
-                   <tr key={i} className="border-b border-gray-50 last:border-none">
-                      <td className="py-6 flex items-center gap-4">
-                         <div className="user-initials bg-primary/10 text-primary w-10 h-10 rounded-lg flex items-center justify-center font-800 text-xs">{u.name.split(' ').map(n => n[0]).join('')}</div>
-                         <div><p className="text-sm font-700">{u.name}</p><p className="text-xs text-muted font-500">{u.email}</p></div>
-                      </td>
-                      <td className="py-6"><span className="text-[10px] font-800 bg-secondary/10 text-secondary px-3 py-1 rounded-sm">{u.type}</span></td>
-                      <td className="py-6 flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{background: u.color}}></div><span className="text-xs font-600">{u.status}</span></td>
-                      <td className="py-6 text-right"><MoreVertical size={18} className="text-muted cursor-pointer" /></td>
-                   </tr>
-                 ))}
-              </tbody>
-           </table>
-        </div>
-
-        <aside className="col-span-4 card flex flex-col p-8 bg-gray-50/50 border-none">
-           <div className="flex justify-between items-center mb-8">
-              <h3>System Logs</h3>
-              <Clock size={18} className="text-muted" />
-           </div>
-           
-           <div className="logs-feed flex flex-col gap-6">
-              {[
-                { time: '14:22:15 • SYSTEM', event: 'Stripe Payment Successful', detail: 'Transaction ID: #TRX-9821-A', color: '#7C3AED' },
-                { time: '13:05:42 • SECURITY', event: 'Failed Login Attempt', detail: 'IP: 192.168.1.45 (Bangkok, TH)', color: '#ef4444' },
-                { time: '12:44:01 • JOB_BOARD', event: 'New Job Posted: "Senior Dev"', detail: 'By: Google Cloud Recruitment', color: '#2563EB' },
-                { time: '11:15:20 • USER', event: 'Sarah Chen updated Profile', detail: '', color: '#10b981' }
-              ].map((log, i) => (
-                <div key={i} className="log-item flex gap-4">
-                   <div className="log-bar w-1 rounded bg-gray-200" style={{background: log.color}}></div>
-                   <div className="text-left">
-                      <p className="text-[10px] font-800 text-muted opacity-60 uppercase">{log.time}</p>
-                      <p className="text-sm font-700 mt-1">{log.event}</p>
-                      {log.detail && <p className="text-[11px] text-muted italic mt-1">{log.detail}</p>}
-                   </div>
-                </div>
-              ))}
-           </div>
-           
-           <button className="btn-outline w-full mt-12 py-3 text-[10px] font-800 tracking-widest uppercase">DOWNLOAD FULL HISTORY</button>
-        </aside>
-      </div>
-
-      <section className="moderation-queue mt-10">
-         <div className="flex justify-between items-center mb-8">
-            <h2>Job Moderation Queue</h2>
-            <button className="icon-btn"><TrendingUp size={18} /></button>
-         </div>
-         
-         <div className="grid grid-cols-3 gap-8">
-            {[
-              { title: 'Full Stack Engineer', company: 'TechNexus Solutions • Remote', desc: 'Seeking a junior developer with experience in React and Rust for our edge infrastructure...' },
-              { title: 'Data Science Intern', company: 'DataLabs Analytics • London', desc: 'Focus on Python and scikit-learn. Must be currently enrolled in a BS or graduate program...' },
-              { title: 'Product Designer', company: 'Creativ Co • Tokyo', desc: 'Strong Figma skills and a portfolio showcasing user-centric mobile applications...' }
-            ].map((job, i) => (
-              <div key={i} className="card mod-card p-10 flex flex-col justify-between">
-                 <div className="flex gap-6 mb-10 items-start">
-                    <div className="icon-box bg-gray-50 border w-12 h-12 rounded-xl flex items-center justify-center"><Briefcase size={20} className="text-primary" /></div>
-                    <div className="text-left w-full">
-                       <div className="flex justify-between">
-                          <h4>{job.title}</h4>
-                          <span className="text-[10px] font-800 bg-primary/10 text-primary px-2 py-0.5 rounded uppercase">PENDING</span>
-                       </div>
-                       <p className="text-xs text-muted mt-1">{job.company}</p>
+           {(activeTab === 'overview' || activeTab === 'users') && (
+              <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 lg:p-10 overflow-hidden">
+                 <div className="flex justify-between items-center mb-10">
+                    <h3 className="text-xl font-black text-slate-900">User Registry</h3>
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-2 rounded-2xl w-full max-w-xs">
+                       <Search size={16} className="text-slate-400" />
+                       <input placeholder="Filter all accounts..." className="bg-transparent border-none outline-none text-sm font-bold w-full" />
                     </div>
                  </div>
-                 <div className="p-6 bg-gray-50/50 rounded-xl mb-10 text-left">
-                    <p className="text-xs italic text-muted-600">"{job.desc}"</p>
-                 </div>
-                 <div className="flex gap-4">
-                    <button className="btn-primary flex-1 py-3 text-sm rounded-lg">Approve</button>
-                    <button className="btn-outline flex-1 py-3 text-sm rounded-lg text-red-600 border-red-100 hover:bg-red-50">Decline</button>
+                 <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                       <thead>
+                          <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-4">
+                             <th className="pb-6">Entity Identity</th>
+                             <th className="pb-6">Type</th>
+                             <th className="pb-6">Status</th>
+                             <th className="pb-6 text-right">Action</th>
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-50">
+                          {[
+                            { name: 'Sarah Chen', email: 'sarah.c@dev.io', type: 'DEVELOPER', status: 'Active', color: 'emerald' },
+                            { name: 'Swift Logic PK', email: 'hr@swiftlogic.pk', type: 'COMPANY', status: 'Verified', color: 'indigo' },
+                            { name: 'James Dalton', email: 'j.dalton@gmail.com', type: 'DEVELOPER', status: 'Active', color: 'slate' }
+                          ].map((u, i) => (
+                            <tr key={i} className="group hover:bg-slate-50/50 transition-all">
+                               <td className="py-6 flex items-center gap-4">
+                                  <div className={`w-11 h-11 rounded-2xl bg-${u.color}-50 text-${u.color}-600 flex items-center justify-center font-black text-xs border border-${u.color}-100`}>
+                                     {u.name.split(' ').map(n => n[0]).join('')}
+                                  </div>
+                                  <div>
+                                     <p className="text-sm font-bold text-slate-900">{u.name}</p>
+                                     <p className="text-xs font-bold text-slate-400">{u.email}</p>
+                                  </div>
+                               </td>
+                               <td className="py-6"><span className="text-[9px] font-black bg-slate-100 text-slate-600 px-3 py-1 rounded-full uppercase tracking-wider">{u.type}</span></td>
+                               <td className="py-6 flex items-center gap-2"><div className={`w-2 h-2 rounded-full bg-${u.color}-500`}></div><span className="text-xs font-bold text-slate-600">{u.status}</span></td>
+                               <td className="py-6 text-right"><MoreVertical size={16} className="text-slate-300 cursor-pointer" /></td>
+                            </tr>
+                          ))}
+                       </tbody>
+                    </table>
                  </div>
               </div>
-            ))}
-         </div>
-      </section>
+           )}
 
-      <style>{`
-        .revenue-card::after {
-           content: '';
-           position: absolute;
-           top: -50px;
-           right: -50px;
-           width: 300px;
-           height: 300px;
-           background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
-           border-radius: 50%;
-        }
-        .dot.red { background: var(--danger); position: absolute; top: -2px; right: -2px; border: 2px solid white; width: 8px; height: 8px; border-radius: 50%; }
-        .text-5xl { font-size: 48px; }
-        .font-800 { font-weight: 800; }
-        
-        .mod-card { border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-      `}</style>
+           {(activeTab === 'overview' || activeTab === 'moderation') && (
+              <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 lg:p-10">
+                 <h3 className="text-xl font-black text-slate-900 mb-8">Pending Moderation</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[
+                      { title: 'Remote PHP Dev', company: 'DevSync ISB', desc: 'Seeking senior Laravel engineer for high-traffic financial app...' },
+                      { title: 'Frontend Intern', company: 'Creative Labs LHR', desc: 'Final year students with React knowledge...' }
+                    ].map((m, i) => (
+                      <div key={i} className="p-6 bg-slate-50 border border-slate-200 rounded-[32px] flex flex-col justify-between hover:border-indigo-200 transition-all text-left">
+                         <div>
+                            <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded uppercase mb-4 inline-block">Review Required</span>
+                            <h4 className="text-lg font-black text-slate-900 leading-tight">{m.title}</h4>
+                            <p className="text-xs font-bold text-slate-400 mt-1">{m.company}</p>
+                            <p className="text-xs text-slate-500 mt-4 leading-relaxed line-clamp-2 italic">"{m.desc}"</p>
+                         </div>
+                         <div className="mt-8 flex gap-3">
+                            <button className="flex-1 bg-white border border-slate-200 text-slate-900 font-bold py-2.5 rounded-xl text-xs hover:bg-emerald-50 hover:border-emerald-200 transition-all">Approve</button>
+                            <button className="flex-1 bg-white border border-slate-200 text-rose-600 font-bold py-2.5 rounded-xl text-xs hover:bg-rose-50 hover:border-rose-100 transition-all">Reject</button>
+                         </div>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+           )}
+
+           {(activeTab === 'overview' || activeTab === 'logs') && (
+              <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 lg:p-10 overflow-hidden">
+                 <h3 className="text-xl font-black text-slate-900 mb-8">System Console Activity</h3>
+                 <div className="space-y-4">
+                    {logs.map((l, i) => (
+                       <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
+                          <div className="flex items-center gap-4">
+                             <div className={`w-2 h-2 rounded-full ${l.status === 'LOCKED' ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>
+                             <div>
+                                <p className="text-xs font-black text-slate-900 uppercase">{l.event}</p>
+                                <p className="text-[10px] font-bold text-slate-400">{l.user}</p>
+                             </div>
+                          </div>
+                          <span className="text-[10px] font-black text-slate-300">{new Date(l.time).toLocaleTimeString()}</span>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+           )}
+
+        </div>
+
+        {/* Right Sidebar Area */}
+        <aside className="xl:col-span-4 space-y-8">
+           
+           {/* Quick Security Actions */}
+           <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 lg:p-10">
+              <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-3"><ShieldAlert className="text-rose-500" size={20} /> Security Gate</h3>
+              {lockedUsers.length === 0 ? (
+                 <div className="py-6 text-center text-slate-300 font-bold text-xs uppercase tracking-widest">No Active Lockouts</div>
+              ) : (
+                 <div className="space-y-4">
+                    {lockedUsers.map((u, i) => (
+                       <div key={i} className="p-4 bg-rose-50 border border-rose-100 rounded-3xl text-left">
+                          <p className="text-[10px] font-black text-rose-500 uppercase mb-2">Locked Account</p>
+                          <p className="text-xs font-bold text-slate-900 mb-1">{u.email}</p>
+                          <p className="text-[10px] text-slate-400 font-medium mb-4">Until {u.until}</p>
+                          <button onClick={() => handleUnlock(u.email)} className="w-full py-2.5 bg-rose-600 text-white font-bold rounded-xl text-xs hover:bg-rose-700 transition-all">Force Unlock</button>
+                       </div>
+                    ))}
+                 </div>
+              )}
+           </div>
+
+           {/* Platform Growth */}
+           <div className="bg-indigo-900 rounded-[40px] p-10 text-white shadow-2xl shadow-indigo-100 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+              <div className="relative z-10 text-left">
+                 <p className="text-[10px] font-black tracking-widest uppercase opacity-70 mb-4 flex items-center gap-2"><TrendingUp size={14} /> Performance</p>
+                 <h4 className="text-2xl font-black mb-1">94.8%</h4>
+                 <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-8">Uptime Integrity</p>
+                 
+                 <div className="flex gap-4">
+                    <button className="flex-1 bg-white text-indigo-900 font-black py-3 rounded-2xl text-[10px] uppercase hover:scale-105 transition-all">Audit Logs</button>
+                    <button className="w-12 h-12 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-white/20 transition-all border border-white/10"><Send size={18} /></button>
+                 </div>
+              </div>
+           </div>
+
+        </aside>
+
+      </div>
     </div>
   );
 };

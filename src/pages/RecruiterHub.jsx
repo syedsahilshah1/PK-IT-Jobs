@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Plus, 
   Eye, 
@@ -18,6 +19,35 @@ import {
 } from 'lucide-react';
 
 const RecruiterHub = () => {
+  const [activeJobs, setActiveJobs] = React.useState([
+    { 
+      title: 'Senior Frontend Engineer (React)', 
+      category: 'Full-time', 
+      location: { city: 'Remote' },
+      applicants: 124, 
+      views: '1.2k', 
+      skills: ['React', 'TypeScript', 'Tailwind'],
+      status: 'ACTIVE',
+    },
+    { 
+      title: 'Backend Systems Architect', 
+      category: 'Full-time', 
+      location: { city: 'On-site (ISB)' },
+      applicants: 45, 
+      views: 890, 
+      skills: ['Node.js', 'PostgreSQL', 'Docker'],
+      status: 'ACTIVE',
+    }
+  ]);
+
+  React.useEffect(() => {
+    document.title = "Recruiter Hub | PK IT Jobs";
+    const stored = JSON.parse(localStorage.getItem('pkit_posted_jobs') || '[]');
+    if (stored.length > 0) {
+      setActiveJobs(prev => [...stored, ...prev]);
+    }
+  }, []);
+  
   return (
     <div className="w-full max-w-[1400px] mx-auto animate-fade-in p-2 lg:p-6 bg-slate-50 min-h-screen">
       {/* Recruiter Header */}
@@ -29,9 +59,17 @@ const RecruiterHub = () => {
            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Recruiter Hub</h1>
            <p className="text-slate-500 font-medium mt-2">Manage your active postings and discover top IT talent.</p>
         </div>
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md border border-indigo-700">
+        <Link 
+          to="/create-job"
+          onClick={() => {
+            import('../utils/notifications').then(({ playNotificationSound }) => {
+              playNotificationSound();
+            });
+          }}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md border border-indigo-700 no-underline"
+        >
            <Send size={18} /> Post a New Job
-        </button>
+        </Link>
       </header>
 
       {/* Stats Cards Section */}
@@ -83,38 +121,10 @@ const RecruiterHub = () => {
               <button className="text-indigo-600 font-bold text-sm hover:underline">View All</button>
            </div>
            
-           <div className="flex flex-col gap-5">
-              {[
-                { 
-                  title: 'Senior Frontend Engineer (React)', 
-                  type: 'Full-time • Remote', 
-                  applicants: 124, 
-                  views: '1.2k', 
-                  tags: ['React', 'TypeScript', 'Tailwind'],
-                  status: 'ACTIVE',
-                  color: 'emerald'
-                },
-                { 
-                  title: 'Backend Systems Architect', 
-                  type: 'Full-time • On-site (ISB)', 
-                  applicants: 45, 
-                  views: 890, 
-                  tags: ['Node.js', 'PostgreSQL', 'Docker'],
-                  status: 'ACTIVE',
-                  color: 'emerald'
-                },
-                { 
-                  title: 'Data Science Associate', 
-                  type: 'Contract • Remote', 
-                  applicants: 0, 
-                  views: 0, 
-                  tags: [],
-                  status: 'DRAFT',
-                  color: 'slate'
-                }
-              ].map((job, i) => (
+            <div className="flex flex-col gap-5">
+              {activeJobs.map((job, i) => (
                 <div key={i} className="bg-white rounded-3xl p-6 lg:p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start text-left">
                      <div className="text-left flex-1">
                         <div className="flex items-center gap-3 flex-wrap">
                            <h4 className="text-lg lg:text-xl font-bold text-slate-900">{job.title}</h4>
@@ -123,42 +133,34 @@ const RecruiterHub = () => {
                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                                : 'bg-slate-100 text-slate-600 border-slate-200'
                            }`}>
-                             {job.status}
+                             {job.status || 'ACTIVE'}
                            </span>
                         </div>
-                        <p className="text-slate-500 font-medium text-sm mt-2">{job.type}</p>
+                        <p className="text-slate-500 font-medium text-sm mt-2">{job.category} • {job.location.city}</p>
                         
                         <div className="flex gap-8 mt-6 items-center">
                            <div className="flex items-center gap-2 text-slate-600 text-sm font-semibold">
-                              <Users size={16} className="text-indigo-500" /> {job.applicants} Applicants
+                              <Users size={16} className="text-indigo-500" /> {job.applicants || 0} Applicants
                            </div>
                            <div className="flex items-center gap-2 text-slate-600 text-sm font-semibold">
-                              <Eye size={16} className="text-indigo-500" /> {job.views} Views
+                              <Eye size={16} className="text-indigo-500" /> {job.views || 0} Views
                            </div>
                         </div>
 
-                        {job.tags.length > 0 && (
+                        {(job.skills || []).length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-6">
-                             {job.tags.map(t => (
+                             {job.skills.map(t => (
                                <span key={t} className="bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold text-[10px] px-3 py-1.5 rounded-lg uppercase tracking-wider">
                                  {t}
                                </span>
                              ))}
                           </div>
                         )}
-                        {job.status === 'DRAFT' && (
-                          <div className="flex items-center gap-2 mt-6 text-slate-400 italic text-sm font-medium">
-                             <Clock size={16} /> Not yet published
-                          </div>
-                        )}
                      </div>
-                     <button className="text-slate-400 hover:text-indigo-600 p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                       <MoreHorizontal size={20} />
-                     </button>
                   </div>
                 </div>
               ))}
-           </div>
+            </div>
         </div>
 
         {/* New Applicants Sidebar */}
@@ -214,15 +216,47 @@ const RecruiterHub = () => {
                    </div>
 
                    <div className="w-full flex gap-3 mt-6 pt-6 border-t border-slate-100">
-                      <button className="flex-1 bg-white border-2 border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-indigo-600 text-xs font-bold py-2.5 rounded-xl transition-colors">
+                      <Link to="/profile" className="flex-1 bg-white border-2 border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-indigo-600 text-xs font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center no-underline">
                         View Profile
-                      </button>
-                      <button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 rounded-xl transition-colors shadow-sm">
+                      </Link>
+                      <button 
+                        onClick={() => {
+                          import('../utils/notifications').then(({ playNotificationSound }) => {
+                            playNotificationSound();
+                          });
+                        }}
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 rounded-xl transition-colors shadow-sm"
+                      >
                         Message
                       </button>
                    </div>
                 </div>
               ))}
+           </div>
+           <div className="bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <CheckCircle2 className="text-emerald-500" size={18} /> Performance Reviews
+                 </h3>
+                 <span className="text-[10px] font-black text-slate-400">VIEW ALL</span>
+              </div>
+              <div className="space-y-4">
+                 {[
+                   { name: 'Senior Dev Role', score: '94%', trend: '+2%' },
+                   { name: 'Interview Quality', score: '8.4/10', trend: 'Stable' }
+                 ].map((r, i) => (
+                   <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
+                      <div>
+                         <p className="text-xs font-bold text-slate-900">{r.name}</p>
+                         <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Automated Insight</p>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-sm font-black text-indigo-600">{r.score}</p>
+                         <p className="text-[9px] font-bold text-emerald-500">{r.trend}</p>
+                      </div>
+                   </div>
+                 ))}
+              </div>
            </div>
         </aside>
       </div>
