@@ -3,6 +3,7 @@ import { CheckCircle2, Clock, XCircle, Filter, Briefcase, Mail } from 'lucide-re
 
 const STORAGE_KEY = 'pkit_applications';
 
+
 const loadApplications = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
